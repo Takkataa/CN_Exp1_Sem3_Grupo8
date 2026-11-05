@@ -18,7 +18,7 @@ public class TicketService {
     @Value("${efs.path}")
     private String efsPath;
 
-    private Ticket generarTicket(TicketRequest request) {
+    public Ticket generarTicket(TicketRequest request) {
         Ticket ticket = new Ticket();
         ticket.setEventoId(request.getEventoId());
         ticket.setUsuarioId(request.getUsuarioId());
