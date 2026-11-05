@@ -35,3 +35,5 @@ build/
 efs-local/
 *.pdf
 .env
+
+application-local.properties
