@@ -20,6 +20,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
+import cl.duoc.tickets_service.exception.TicketNotFoundException;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import java.util.List;
 
 import javax.management.RuntimeErrorException;
 
@@ -88,5 +92,33 @@ public class TicketService {
             document.close();
         }
 
+    }
+
+       public List<Ticket> listarPorEvento(String eventoId) {
+        return ticketRepository.findByEventoId(eventoId);
+    }
+
+    public List<Ticket> listarPorUsuario(String usuarioId) {
+        return ticketRepository.findByUsuarioId(usuarioId);
+    }
+
+    public Ticket obtenerPorId(Long id) {
+        return ticketRepository.findById(id)
+                .orElseThrow(() -> new TicketNotFoundException(id));
+    }
+
+    public Resource obtenerPdf(Long id) {
+        Ticket ticket = obtenerPorId(id);
+
+        if (ticket.getRutaEfs() == null) {
+            throw new TicketNotFoundException("El ticket " + id + " no tiene un PDF generado");
+        }
+
+        Path ruta = Paths.get(ticket.getRutaEfs());
+        if (!Files.exists(ruta)) {
+            throw new TicketNotFoundException("El archivo PDF del ticket " + id + " no existe");
+        }
+
+        return new FileSystemResource(ruta);
     }
 }
