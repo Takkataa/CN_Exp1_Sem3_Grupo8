@@ -4,10 +4,12 @@ import cl.duoc.tickets_service.dto.TicketRequest;
 import cl.duoc.tickets_service.model.Ticket;
 import cl.duoc.tickets_service.service.TicketService;
 import cl.duoc.tickets_service.dto.TicketUpdateRequest;
+import cl.duoc.tickets_service.dto.EstadisticasEventoResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -15,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -28,6 +31,9 @@ import java.util.List;
  *   <li>{@code POST   /}                       crea un ticket y genera su PDF.</li>
  *   <li>{@code GET    /evento/{eventoId}}      lista los tickets de un evento.</li>
  *   <li>{@code GET    /usuario/{usuarioId}}    lista los tickets de un usuario.</li>
+ *   <li>{@code GET    /historial}              historial con filtros opcionales (evento, usuario, estado, fechas).</li>
+ *   <li>{@code GET    /estadisticas}           estadísticas de ventas y reservas de todos los eventos.</li>
+ *   <li>{@code GET    /evento/{eventoId}/estadisticas} estadísticas de un evento.</li>
  *   <li>{@code GET    /{id}}                   obtiene un ticket por su id.</li>
  *   <li>{@code POST   /{id}/subir}             sube (o vuelve a subir) el PDF a S3.</li>
  *   <li>{@code GET    /{id}/descargar}         descarga el PDF del ticket desde S3.</li>
@@ -78,6 +84,48 @@ public class TicketController {
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<List<Ticket>> listarPorUsuario(@PathVariable String usuarioId) {
         return ResponseEntity.ok(ticketService.listarPorUsuario(usuarioId));
+    }
+
+    /**
+     * Consulta el historial de tickets generados con filtros opcionales.
+     * Ejemplo: {@code /api/tickets/historial?eventoId=evento123&estado=VENDIDO&desde=2026-11-01&hasta=2026-11-30}
+     *
+     * @param eventoId  filtra por evento (opcional)
+     * @param usuarioId filtra por usuario (opcional)
+     * @param estado    filtra por estado: RESERVADO, VENDIDO o CANCELADO (opcional)
+     * @param desde     fecha inicial en formato yyyy-MM-dd, inclusive (opcional)
+     * @param hasta     fecha final en formato yyyy-MM-dd, inclusive (opcional)
+     * @return 200 OK con la lista (puede venir vacía)
+     */
+    @GetMapping("/historial")
+    public ResponseEntity<List<Ticket>> historial(
+            @RequestParam(required = false) String eventoId,
+            @RequestParam(required = false) String usuarioId,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+        return ResponseEntity.ok(ticketService.consultarHistorial(eventoId, usuarioId, estado, desde, hasta));
+    }
+
+    /**
+     * Estadísticas de ventas y reservas de todos los eventos.
+     *
+     * @return 200 OK con una entrada por evento
+     */
+    @GetMapping("/estadisticas")
+    public ResponseEntity<List<EstadisticasEventoResponse>> estadisticasGenerales() {
+        return ResponseEntity.ok(ticketService.estadisticasGenerales());
+    }
+
+    /**
+     * Estadísticas de ventas y reservas de un evento.
+     *
+     * @param eventoId id del evento
+     * @return 200 OK con las estadísticas (en 0 si el evento no tiene tickets)
+     */
+    @GetMapping("/evento/{eventoId}/estadisticas")
+    public ResponseEntity<EstadisticasEventoResponse> estadisticasPorEvento(@PathVariable String eventoId) {
+        return ResponseEntity.ok(ticketService.estadisticasPorEvento(eventoId));
     }
 
     /**

@@ -14,13 +14,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import cl.duoc.tickets_service.dto.TicketUpdateRequest;
+import cl.duoc.tickets_service.dto.EstadisticasEventoResponse;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import cl.duoc.tickets_service.exception.TicketNotFoundException;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -198,6 +204,86 @@ public class TicketService {
      */
     public List<Ticket> listarPorUsuario(String usuarioId) {
         return ticketRepository.findByUsuarioId(usuarioId);
+    }
+
+    /**
+     * Consulta el historial de tickets generados aplicando los filtros indicados.
+     * Todos los filtros son opcionales y se pueden combinar.
+     *
+     * @param eventoId  id del evento (opcional)
+     * @param usuarioId id del usuario (opcional)
+     * @param estado    estado del ticket (opcional)
+     * @param desde     fecha inicial, inclusive (opcional)
+     * @param hasta     fecha final, inclusive (opcional)
+     * @return tickets que cumplen los filtros, del más reciente al más antiguo
+     */
+    public List<Ticket> consultarHistorial(String eventoId, String usuarioId, String estado,
+                                           LocalDate desde, LocalDate hasta) {
+        // "desde" parte a las 00:00 de ese día.
+        // "hasta" se convierte en las 00:00 del día siguiente (exclusivo),
+        // así se incluyen todos los tickets creados durante el día "hasta".
+        LocalDateTime inicio = (desde != null) ? desde.atStartOfDay() : null;
+        LocalDateTime fin = (hasta != null) ? hasta.plusDays(1).atStartOfDay() : null;
+
+        return ticketRepository.buscarHistorial(eventoId, usuarioId, estado, inicio, fin);
+    }
+
+    /**
+     * Calcula las estadísticas de ventas y reservas de un evento.
+     * Si el evento no tiene tickets, devuelve todos los valores en 0.
+     *
+     * @param eventoId id del evento
+     * @return estadísticas del evento
+     */
+    public EstadisticasEventoResponse estadisticasPorEvento(String eventoId) {
+        EstadisticasEventoResponse estadisticas = new EstadisticasEventoResponse(eventoId);
+
+        // Cada fila: [estado, cantidad, sumaPrecios]
+        for (Object[] fila : ticketRepository.resumenPorEstado(eventoId)) {
+            acumular(estadisticas, (String) fila[0], (Long) fila[1], ((Number) fila[2]).doubleValue());
+        }
+        return estadisticas;
+    }
+
+    /**
+     * Calcula las estadísticas de ventas y reservas de todos los eventos.
+     *
+     * @return una entrada por evento, ordenadas por id de evento
+     */
+    public List<EstadisticasEventoResponse> estadisticasGenerales() {
+        // LinkedHashMap mantiene el orden en que llegan los eventos desde la consulta
+        Map<String, EstadisticasEventoResponse> porEvento = new LinkedHashMap<>();
+
+        // Cada fila: [eventoId, estado, cantidad, sumaPrecios]
+        for (Object[] fila : ticketRepository.resumenPorEventoYEstado()) {
+            String eventoId = (String) fila[0];
+            EstadisticasEventoResponse estadisticas =
+                    porEvento.computeIfAbsent(eventoId, EstadisticasEventoResponse::new);
+            acumular(estadisticas, (String) fila[1], (Long) fila[2], ((Number) fila[3]).doubleValue());
+        }
+        return new ArrayList<>(porEvento.values());
+    }
+
+    /**
+     * Suma un grupo de tickets (mismo estado) a las estadísticas de un evento.
+     *
+     * @param estadisticas estadísticas a actualizar
+     * @param estado       estado del grupo
+     * @param cantidad     cantidad de tickets del grupo
+     * @param suma         suma de precios del grupo
+     */
+    private void acumular(EstadisticasEventoResponse estadisticas, String estado, long cantidad, double suma) {
+        estadisticas.setTotalTickets(estadisticas.getTotalTickets() + cantidad);
+
+        if ("RESERVADO".equals(estado)) {
+            estadisticas.setReservados(cantidad);
+            estadisticas.setMontoReservado(suma);
+        } else if ("VENDIDO".equals(estado)) {
+            estadisticas.setVendidos(cantidad);
+            estadisticas.setMontoVendido(suma);
+        } else if ("CANCELADO".equals(estado)) {
+            estadisticas.setCancelados(cantidad);
+        }
     }
 
     /**
