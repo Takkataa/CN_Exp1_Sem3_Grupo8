@@ -1,0 +1,97 @@
+# ============================================================
+# Pipeline CI/CD del microservicio de tickets
+# En cada push a main:
+#   1. Construye la imagen Docker y la publica en Docker Hub.
+#   2. Se conecta por SSH a la EC2 y reemplaza el contenedor por la nueva versión.
+#
+# Secrets necesarios (GitHub > Settings > Secrets and variables > Actions):
+#   DOCKERHUB_USERNAME, DOCKERHUB_TOKEN  -> cuenta de Docker Hub
+#   EC2_HOST, EC2_SSH_KEY                -> IP pública de la EC2 y contenido del .pem
+#   DB_URL, DB_USER, DB_PASSWORD         -> conexión a la base de datos RDS
+#   AWS_S3_BUCKET                        -> nombre del bucket de S3
+# ============================================================
+name: CI/CD tickets-service
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Permite ejecutarlo a mano desde la pestaña Actions
+
+env:
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/tickets-service
+
+jobs:
+  # ---------- Job 1: construir y publicar la imagen ----------
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Iniciar sesión en Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Se publican dos etiquetas: "latest" (la que usa la EC2)
+      # y el hash del commit (para saber qué versión está desplegada o volver atrás)
+      - name: Construir y publicar la imagen
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  # ---------- Job 2: desplegar en la EC2 ----------
+  deploy:
+    needs: build-and-push # Solo se ejecuta si la imagen se publicó bien
+    runs-on: ubuntu-latest
+    steps:
+      - name: Desplegar en EC2 por SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          # Variables que se envían a la EC2 para usarlas en el script
+          envs: IMAGE_NAME,DB_URL,DB_USER,DB_PASSWORD,AWS_S3_BUCKET
+          script: |
+            # Descargar la última versión de la imagen
+            docker pull "$IMAGE_NAME:latest"
+
+            # Detener y borrar el contenedor anterior (si no existe, no falla)
+            docker stop tickets-service || true
+            docker rm tickets-service || true
+
+            # Levantar el nuevo contenedor:
+            #  -p 8080:8080         expone la API en el puerto 8080 de la EC2
+            #  -v ...:/app/efs      monta la carpeta del EFS dentro del contenedor
+            #  EFS_PATH             reemplaza efs.path de application.properties
+            #  Las credenciales de S3 vienen del rol LabRole de la instancia
+            docker run -d \
+              --name tickets-service \
+              --restart unless-stopped \
+              -p 8080:8080 \
+              -v /mnt/efs/tickets:/app/efs \
+              -e EFS_PATH=/app/efs \
+              -e DB_URL="$DB_URL" \
+              -e DB_USER="$DB_USER" \
+              -e DB_PASSWORD="$DB_PASSWORD" \
+              -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
+              -e AWS_REGION=us-east-1 \
+              "$IMAGE_NAME:latest"
+
+            # Borrar imágenes viejas para no llenar el disco
+            docker image prune -f

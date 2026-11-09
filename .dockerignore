@@ -1,0 +1,11 @@
+# Archivos que NO se envían a Docker al construir la imagen
+target/
+efs-local/
+.git/
+.vscode/
+.idea/
+.mvn/
+mvnw
+mvnw.cmd
+HELP.md
+.env
