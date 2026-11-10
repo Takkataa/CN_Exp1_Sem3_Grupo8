@@ -1,0 +1,370 @@
+{
+  "info": {
+    "_postman_id": "1169dbb6-d007-41e4-9537-549b1bb330af",
+    "name": "Sumativa 1 Cloud Native",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56261478",
+    "_collection_link": "https://go.postman.co/collection/56261478-1169dbb6-d007-41e4-9537-549b1bb330af?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Crear ticket",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"eventoId\": \"evento2\",\r\n  \"usuarioId\": \"usuario30\",\r\n  \"precio\": 15000\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://34.233.28.182:8080/api/tickets",
+          "protocol": "http",
+          "host": [
+            "34",
+            "233",
+            "28",
+            "182"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "tickets"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Ver ticket por evento",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://34.233.28.182:8080/api/tickets/evento/evento2",
+          "protocol": "http",
+          "host": [
+            "34",
+            "233",
+            "28",
+            "182"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "tickets",
+            "evento",
+            "evento2"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Ver ticket por usuario",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://34.233.28.182:8080/api/tickets/usuario/usuario30",
+          "protocol": "http",
+          "host": [
+            "34",
+            "233",
+            "28",
+            "182"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "tickets",
+            "usuario",
+            "usuario30"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Ver ticket por id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://34.233.28.182:8080/api/tickets/14",
+          "protocol": "http",
+          "host": [
+            "34",
+            "233",
+            "28",
+            "182"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "tickets",
+            "14"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Descargar ticket por id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://34.233.28.182:8080/api/tickets/14/descargar",
+          "protocol": "http",
+          "host": [
+            "34",
+            "233",
+            "28",
+            "182"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "tickets",
+            "14",
+            "descargar"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Modificar ticket por id",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"estado\":\"VENDIDO\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://34.233.28.182:8080/api/tickets/14",
+          "protocol": "http",
+          "host": [
+            "34",
+            "233",
+            "28",
+            "182"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "tickets",
+            "14"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Subir ticket por id",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "http://34.233.28.182:8080/api/tickets/1/subir",
+          "protocol": "http",
+          "host": [
+            "34",
+            "233",
+            "28",
+            "182"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "tickets",
+            "1",
+            "subir"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Eliminar ticket por id",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://34.233.28.182:8080/api/tickets/14",
+          "protocol": "http",
+          "host": [
+            "34",
+            "233",
+            "28",
+            "182"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "tickets",
+            "14"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Historial de tickets",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://34.233.28.182:8080/api/tickets/historial",
+          "protocol": "http",
+          "host": [
+            "34",
+            "233",
+            "28",
+            "182"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "tickets",
+            "historial"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Ticket Vendidos por evento",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://34.233.28.182:8080/api/tickets/historial?eventoId=evento123&estado=VENDIDO",
+          "protocol": "http",
+          "host": [
+            "34",
+            "233",
+            "28",
+            "182"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "tickets",
+            "historial"
+          ],
+          "query": [
+            {
+              "key": "eventoId",
+              "value": "evento123"
+            },
+            {
+              "key": "estado",
+              "value": "VENDIDO"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Tickets por usuario en fechas",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://34.233.28.182:8080/api/tickets/historial?usuarioId=usuario1&desde=2026-11-01&hasta=2026-11-30",
+          "protocol": "http",
+          "host": [
+            "34",
+            "233",
+            "28",
+            "182"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "tickets",
+            "historial"
+          ],
+          "query": [
+            {
+              "key": "usuarioId",
+              "value": "usuario1"
+            },
+            {
+              "key": "desde",
+              "value": "2026-11-01"
+            },
+            {
+              "key": "hasta",
+              "value": "2026-11-30"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Estadisticas por evento",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://34.233.28.182:8080/api/tickets/evento/evento123/estadisticas",
+          "protocol": "http",
+          "host": [
+            "34",
+            "233",
+            "28",
+            "182"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "tickets",
+            "evento",
+            "evento123",
+            "estadisticas"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Estadisticas generales",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://34.233.28.182:8080/api/tickets/estadisticas",
+          "protocol": "http",
+          "host": [
+            "34",
+            "233",
+            "28",
+            "182"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "tickets",
+            "estadisticas"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
