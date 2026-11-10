@@ -1,5 +1,5 @@
 # ============================================================
-# Imagen Docker del microservicio de tickets (multi-stage)
+# Imagen Docker del microservicio de tickets 
 # Etapa 1 compila el proyecto con Maven; etapa 2 solo trae el .jar
 # para que la imagen final sea liviana (sin Maven ni código fuente).
 # ============================================================
